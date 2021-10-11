@@ -273,7 +273,7 @@ int main(int argc, char* argv[])
     }
     // close files and release memory
     if (archiveFp)  fclose(archiveFp);
-    if (fileFp) fclose(fileFp);
+    //if (fileFp) fclose(fileFp);
     if (ListFp) fclose(ListFp);
     errorfstream.close();
     free(key);

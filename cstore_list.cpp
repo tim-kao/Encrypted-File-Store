@@ -57,9 +57,12 @@ void delList(FILE *listFp, char* archiveName, char* fileName, long length)
         size_t targetlength = length - (strlen(archiveName) + strlen(fileName) + 2);
         ssize_t read;
         char* buf = new char[targetlength];
-        memset(buf, 0, length);
-        while ((read = getline(&line, &len, listFp)) != -1) 
+        
+	//memset(buf, 0, length);
+	
+	while ((read = getline(&line, &len, listFp)) != -1) 
         {
+		
                 char temp[read];
                 std::strcpy(temp, line);
                 char* archiveNameInList = strtok(line, "/");
@@ -70,9 +73,10 @@ void delList(FILE *listFp, char* archiveName, char* fileName, long length)
                         remainLength += read;
                 }
         }
+	
         if (truncate(ListFile, remainLength) != 0 || targetlength != remainLength) throw std::out_of_range("File can't access\n");
-        fseek(listFp, 0, SEEK_SET);
-        if (fwrite(buf, 1, strlen(buf), listFp) != strlen(buf))
+	fseek(listFp, 0, SEEK_SET);
+	if (fwrite(buf, 1, strlen(buf), listFp) != strlen(buf))
         {
                 free(buf);
                 throw std::out_of_range("File can't access\n");
