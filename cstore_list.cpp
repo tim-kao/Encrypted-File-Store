@@ -50,7 +50,6 @@ void addList(FILE *listFp, char* archiveName, char* fileName)
 
 void delList(FILE *listFp, char* archiveName, char* fileName, long length)
 {
-        if (!chkList(listFp, archiveName, fileName)) throw std::invalid_argument("File does not exist in list.txt\n");
         fseek(listFp, 0, SEEK_SET);
         char* line = NULL;
         size_t len = 0;
