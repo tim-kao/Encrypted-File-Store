@@ -11,9 +11,15 @@
 #include <unordered_map>
 #include <unistd.h>
 #include <map>
+#include <limits.h>
 #include <fstream>
 #include <cstdlib>
 #include <sys/stat.h>
+#include <termios.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 
 #include "crypto_lib/aes.h"
 #include "crypto_lib/sha256.h"

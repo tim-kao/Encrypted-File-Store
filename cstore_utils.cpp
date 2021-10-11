@@ -2,17 +2,6 @@
 #include "crypto_lib/sha256.h"
 #include "crypto_lib/aes.h"
 
-#include <iostream>
-#include <string>
-#include <stdio.h>
-#include <cstdlib>
-#include <cstring>
-#include <curses.h>
-#include <termios.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-
 void print_hex(const BYTE* byte_arr, int len)
 {
     for(int i = 0; i < len; i++)

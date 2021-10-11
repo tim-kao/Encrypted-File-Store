@@ -83,7 +83,6 @@ int cstore_add(FILE *srcFile, FILE *archiveFp, FILE *list, BYTE hashPassWd[], in
         free(IV);
         free(readBuf);
         free(writeBuf);
-        fclose(srcFile);
         free(HMAC);
         
     return 1;
