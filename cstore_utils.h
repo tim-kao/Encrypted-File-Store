@@ -8,6 +8,7 @@
 #include <math.h>    
 #include <string>
 #include <cstring>
+#include <climits>
 #include <unordered_map>
 #include <fstream>
 #include <unistd.h>

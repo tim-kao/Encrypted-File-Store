@@ -1,14 +1,6 @@
 #include "cstore_utils.h"
 #include "crypto_lib/sha256.h"
 #include "crypto_lib/aes.h"
-
-#include <iostream>
-#include <string>
-#include <stdio.h>
-#include <cstdlib>
-#include <cstring>
-#include <curses.h>
-#include <termios.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
