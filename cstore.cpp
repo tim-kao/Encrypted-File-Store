@@ -1,11 +1,3 @@
-#include <iostream>
-#include <map>
-#include <fstream>
-#include <sstream>
-#include <stdio.h>
-#include <cstdlib>
-#include <unistd.h>
-#include <sys/stat.h>
 #include "crypto_lib/aes.h"
 #include "crypto_lib/sha256.h"
 #include "cstore_list.h"
@@ -45,6 +37,7 @@ int main(int argc, char* argv[])
     }
     // create list file if not exist
     FILE * ListFp;
+    std::ofstream errorfstream (errorList,std::ios::out);
     if (access(ListFile, F_OK) != 0)
     {
         ListFp = fopen(ListFile , "w+" );
@@ -90,22 +83,42 @@ int main(int argc, char* argv[])
     }
     validatePasswd(passwd);
     BYTE* key = passwdTokey(ctx, passwd);
+    struct stat archiveSt;
+    stat(archiveName, &archiveSt);
     // scan all files in the archive and make as a set for later use
     if (cmds[cmd] > 2 && access(archiveName, F_OK) != 0)
     {
         free(key);
-        throw std::invalid_argument( "Error: archive is not available\n");
+        std::cout << msgArchiveNotExist;
+        errorfstream<<msgArchiveNotExist;
+        return -1;
     }
     else if (cmds[cmd] > 2 && strlen(archiveName) > MAX_FILE_NAME_SIZE)  
     {
         free(key);
-        throw std::invalid_argument( "Error: archive file name longer than 20 characters\n");
+        std::cout << msgArchiveFileNameTooLong;
+        errorfstream<<msgArchiveFileNameTooLong;
+        return -1;
+    }
+    else if (access(archiveName, F_OK) == 0 && 0 < archiveSt.st_size && archiveSt.st_size <= SHA256_BLOCK_SIZE * 2 + METADATA_SIZE)
+    {
+        free(key);
+        std::cout << msgArchiveCorrupt;
+        errorfstream<<msgArchiveCorrupt;
+        return -1;        
     }
     // add: write to archive and archive list
     FILE* archiveFp = NULL;
     FILE* fileFp = NULL;
-    FILE* errorFp = NULL;
-    struct stat archiveSt;
+    
+    if (!errorfstream.is_open())
+    {
+        free(key);
+        std::cout << msgErrortxtAccessIssue;
+        errorfstream<<msgErrortxtAccessIssue;
+        return -1;
+    }
+  
     struct stat fileSt;
     struct stat listSt;
     char* fileNameFp = *argv++;
@@ -113,141 +126,156 @@ int main(int argc, char* argv[])
     std::unordered_map<std::string, long> filenameTofpOffset;
     
     if (fileNameFp == NULL) show_usage(program);
-
-    while (fileNameFp)
-    {
-        stat(archiveName, &archiveSt);
-        stat(fileNameFp, &fileSt);
-        stat(ListFile, &listSt);
-        switch(cmds[cmd])
+    try{
+        while (fileNameFp)
         {
-            case 2: // add file to archive
+            stat(archiveName, &archiveSt);
+            stat(fileNameFp, &fileSt);
+            stat(ListFile, &listSt);
+            std::string archiveNotExist = "Archive " + std::string(archiveName, strlen(archiveName)) + " does not exist or is empty\n";
+            std::string fileNotExist = "File " + std::string(fileNameFp, strlen(fileNameFp)) + " does not exist or is empty\n";
+            std::string fileTooLarge = "File " + std::string(fileNameFp, strlen(fileNameFp)) + " size is too large\n";
+            std::string NameLenTooLarge = "File " + std::string(fileNameFp, strlen(fileNameFp)) + "'s name length is at most 20 characters\n";
+            switch(cmds[cmd])
             {
-                // archive does not exist or empty, create a new one. append 32bytes for HMAC
-                if (firstRound)
+                case 2: // add file to archive
                 {
-                    if (access(archiveName, F_OK) != 0 || archiveSt.st_size == 0)
+                    // archive does not exist or empty, create a new one. append 32bytes for HMAC
+                    if (firstRound)
                     {
-                        archiveFp = fopen(archiveName , "wb+" );
-                        padFile(archiveFp, SHA256_BLOCK_SIZE);
-                        fclose(archiveFp);
-                        archiveFp = fopen(archiveName , "rb+" );
+                        if (access(archiveName, F_OK) != 0 || archiveSt.st_size == 0)
+                        {
+                            archiveFp = fopen(archiveName , "wb+" );
+                            padFile(archiveFp, SHA256_BLOCK_SIZE);
+                            fclose(archiveFp);
+                            archiveFp = fopen(archiveName , "rb+" );
+                        }
+                        else
+                        {
+                            archiveFp = fopen(archiveName , "rb+" );
+                            filenameTofpOffset = verifyArchive(archiveFp, key, archiveSt.st_size - SHA256_BLOCK_SIZE);
+                        }
+                    } 
+                    fileFp = fopen(fileNameFp , "rb" );
+                    if(access(archiveName, F_OK) == 0 && access(fileNameFp, F_OK) == 0 && MAX_FILE_SIZE >= fileSt.st_size > 0 && strlen(fileNameFp) <= MAX_FILE_NAME_SIZE)
+                    {
+                        addList(ListFp, archiveName, fileNameFp);
+                        cstore_add(fileFp, archiveFp, ListFp, key, strlen(fileNameFp), fileNameFp, fileSt.st_size);
+                        std::cout << "Add files " << fileNameFp << " to "<< archiveName << "\n";
+                    } 
+                    else if (fileSt.st_size > MAX_FILE_SIZE)
+                    {
+                        std::cout << fileTooLarge;
+                        errorfstream << fileTooLarge;
+                    } 
+                    else if (strlen(fileNameFp) > MAX_FILE_NAME_SIZE)
+                    {
+                        std::cout << NameLenTooLarge;
+                        errorfstream << NameLenTooLarge;                    
+                    } 
+                    else
+                    {
+                        std::cout << fileNotExist;
+                        errorfstream << fileNotExist;
+                    }
+                    // update the archive HMAC in the end of all operations
+                    if (!*argv) 
+                    {
+                        stat(archiveName, &archiveSt);
+                        if (archiveSt.st_size == SHA256_BLOCK_SIZE)  remove(archiveName);
+                        else
+                        {
+                            updateHMAC(archiveFp, key, archiveSt.st_size - SHA256_BLOCK_SIZE);
+    //                        std::cout << "Double verification\n";
+    //                        verifyArchive(archiveFp, key, archiveSt.st_size - SHA256_BLOCK_SIZE);
+                        }
+                    } 
+                    break;
+                }
+                case 3: //extract
+                {
+                    // Open files and verify/Parse archive. 
+                    // Single pass - put all files' pointer position into map filenameTofpOffset
+                    if (firstRound) 
+                    {
+                        archiveFp = fopen(archiveName , "rb" );
+                        filenameTofpOffset = verifyArchive(archiveFp, key, archiveSt.st_size - SHA256_BLOCK_SIZE);
+                    }
+                    if (access(archiveName, F_OK) == 0)
+                    {
+                        // file exists in both list.txt and archive
+                        if(chkList(ListFp, archiveName, fileNameFp) && filenameTofpOffset.find(std::string(fileNameFp)) != filenameTofpOffset.end())
+                        {
+                            fseek(archiveFp, filenameTofpOffset[std::string(fileNameFp)], SEEK_SET); 
+                            cstore_extract(archiveFp, key, fileNameFp);
+                        }
+                        else // file does not exist
+                        {
+                            std::cout << fileNotExist;
+                            errorfstream << fileNotExist;
+                        }
                     }
                     else
                     {
+                        errorfstream << archiveNotExist;
+                        throw std::invalid_argument(archiveNotExist);
+                        return 1;
+                    }
+                    if (!*argv) std::cout<<"Extraction completed.\n Files that does not exist in archive are loggeed in error.txt";
+                    break;       
+                }    
+                case 4: // delete
+                {
+                    // Open files and verify/Parse archive. 
+                    // Single pass - put all files' pointer position into map filenameTofpOffset
+                    if (firstRound) 
+                    {
                         archiveFp = fopen(archiveName , "rb+" );
-                        filenameTofpOffset = verifyArchive(archiveFp, key, archiveSt.st_size - SHA256_BLOCK_SIZE);
+                        verifyArchive(archiveFp, key, archiveSt.st_size - SHA256_BLOCK_SIZE);
                     }
-                    //errorFp = fopen(errorList, "w");
-                } 
-                fileFp = fopen(fileNameFp , "rb" );
-                if(access(archiveName, F_OK) == 0 && access(fileNameFp, F_OK) == 0 && MAX_FILE_SIZE >= fileSt.st_size > 0 && strlen(fileNameFp) <= MAX_FILE_NAME_SIZE)
-                {
-                    addList(ListFp, archiveName, fileNameFp);
-                    cstore_add(fileFp, archiveFp, ListFp, key, strlen(fileNameFp), fileNameFp, fileSt.st_size);
-                    std::cout << "Add files " << fileNameFp << " to "<< archiveName << "\n";
-                } 
-                else if (fileSt.st_size  > MAX_FILE_SIZE) std::cout << "File " << fileNameFp << "'s size is too larger\n";
-                else if (strlen(fileNameFp) > MAX_FILE_NAME_SIZE) std::cout << "File " << fileNameFp << "'s name is at most 20 characters\n";
-                else std::cout << "File '" << fileNameFp << "' is skipped because it is not accessible or empty\n";
-                // update the archive HMAC in the end of all operations
-                if (!*argv) 
-                {
-                    stat(archiveName, &archiveSt);
-                    updateHMAC(archiveFp, key, archiveSt.st_size - SHA256_BLOCK_SIZE);
-                    std::cout << "Double verification\n";
-                    verifyArchive(archiveFp, key, archiveSt.st_size - SHA256_BLOCK_SIZE);
-                } 
-                break;
+                    if (access(archiveName, F_OK) == 0)
+                    {
+                        // file exists in both list.txt and archive
+                        if(chkList(ListFp, archiveName, fileNameFp) && cstore_delete(archiveName, archiveFp, key, fileNameFp, archiveSt.st_size))
+                        {
+                            delList(ListFp, archiveName, fileNameFp, listSt.st_size);
+                        }
+                        else // file does not exist
+                        {
+                            std::cout << fileNotExist;
+                            errorfstream << fileNotExist;
+                        }
+                    }
+                    else
+                    {
+                        errorfstream << archiveNotExist;
+                        throw std::invalid_argument(archiveNotExist);
+                        return 1;
+                    }
+                    if (!*argv) 
+                    {
+                        stat(archiveName, &archiveSt);
+                        updateHMAC(archiveFp, key, archiveSt.st_size - SHA256_BLOCK_SIZE);
+                        std::cout << "Deletation complete, check error.txt for failure items\n";
+                    } 
+                    break;       
+                }    
             }
-            case 3: //extract
-            {
-                // Open files and verify/Parse archive. 
-                // Single pass - put all files' pointer position into map filenameTofpOffset
-                if (firstRound) 
-                {
-                    archiveFp = fopen(archiveName , "rb" );
-                    errorFp = fopen(errorList, "w");
-                    filenameTofpOffset = verifyArchive(archiveFp, key, archiveSt.st_size - SHA256_BLOCK_SIZE);
-                }
-                if (access(archiveName, F_OK) == 0)
-                {
-                    // file exists in both list.txt and archive
-                    if(chkList(ListFp, archiveName, fileNameFp) && filenameTofpOffset.find(std::string(fileNameFp)) != filenameTofpOffset.end())
-                    {
-                        fseek(archiveFp, filenameTofpOffset[std::string(fileNameFp)], SEEK_SET); 
-                        cstore_extract(archiveFp, key, fileNameFp);
-                    }
-                    else // file does not exist
-                    {
-                        std::cout << "File " << fileNameFp << " deletion failed due to absence in archive\n";
-                        size_t s1 = fwrite(archiveName, 1, strlen(archiveName), errorFp);
-                        size_t s2 = fwrite(slash, 1, strlen(slash), errorFp);
-                        size_t s3 = fwrite(fileNameFp, 1, strlen(fileNameFp), errorFp);
-                        size_t s4 = fwrite(eol, 1, strlen(eol), errorFp);
-                        if ((s1 + s2 + s3 + s4) != strlen(archiveName) + strlen(slash) + strlen(fileNameFp) + strlen(eol)) throw std::range_error( "Error");
-                    }
-                }
-                else
-                {
-                    throw std::invalid_argument( "Archive does not exist\n" );
-                    free(key);
-                    return 1;
-                }
-                if (!*argv) std::cout<<"Extraction completed.\n Files that does not exist in archive are loggeed in error.txt";
-                break;       
-            }    
-            case 4: // delete
-            {
-                // Open files and verify/Parse archive. 
-                // Single pass - put all files' pointer position into map filenameTofpOffset
-                if (firstRound) 
-                {
-                    archiveFp = fopen(archiveName , "rb+" );
-                    errorFp = fopen(errorList, "w");
-                    verifyArchive(archiveFp, key, archiveSt.st_size - SHA256_BLOCK_SIZE);
-                }
-                if (access(archiveName, F_OK) == 0)
-                {
-                    // file exists in both list.txt and archive
-                    if(chkList(ListFp, archiveName, fileNameFp) && cstore_delete(archiveName, archiveFp, key, fileNameFp, archiveSt.st_size))
-                    {
-                        delList(ListFp, archiveName, fileNameFp, listSt.st_size);
-                    }
-                    else // file does not exist
-                    {
-                        std::cout << "File " << fileNameFp << " deletion failed due to absence in archive\n";
-                        size_t s1 = fwrite(archiveName, 1, strlen(archiveName), errorFp);
-                        size_t s2 = fwrite(slash, 1, strlen(slash), errorFp);
-                        size_t s3 = fwrite(fileNameFp, 1, strlen(fileNameFp), errorFp);
-                        size_t s4 = fwrite(eol, 1, strlen(eol), errorFp);
-                        if ((s1 + s2 + s3 + s4) != strlen(archiveName) + strlen(slash) + strlen(fileNameFp) + strlen(eol)) throw std::range_error( "Error");
-                    }
-                }
-                else
-                {
-                    throw std::invalid_argument( "Archive does not exist\n" );
-                    free(key);
-                    return 1;
-                }
-                if (!*argv) 
-                {
-                    stat(archiveName, &archiveSt);
-                    updateHMAC(archiveFp, key, archiveSt.st_size - SHA256_BLOCK_SIZE);
-                    std::cout << "Deletation complete, check error.txt for failure items\n";
-                } 
-                break;       
-            }    
+            if (fileFp) fclose(fileFp);
+            fileNameFp = *argv++;   
+            firstRound = false;
         }
-        if (fileFp) fclose(fileFp);
-        fileNameFp = *argv++;   
-        firstRound = false;
+    }
+    catch(std::exception& e)
+    {
+        std::cout << e.what();
+        errorfstream << e.what();
     }
     // close files and release memory
     if (archiveFp)  fclose(archiveFp);
     if (fileFp) fclose(fileFp);
     if (ListFp) fclose(ListFp);
-    if (errorFp) fclose(errorFp);
+    errorfstream.close();
     free(key);
     return 1;
 }

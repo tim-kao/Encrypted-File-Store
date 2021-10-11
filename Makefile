@@ -1,5 +1,5 @@
 cstore: cstore.o 
-	g++ *.cpp */*.c -o cstore.exe
+	g++ *.cpp */*.c -o cstore
 
 debug: DEBUG = -DDEBUG
 

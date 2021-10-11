@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+
+.vscode
+*.txt
+cstore*/
+*.dSYM
+@*
+*.mp4
+list

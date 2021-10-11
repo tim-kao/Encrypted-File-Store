@@ -2,21 +2,30 @@
 #define CSTORE_UTILS
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
-#include <math.h>    
-#include <string>
+#include <math.h>   
 #include <cstring>
 #include <unordered_map>
-#include <fstream>
 #include <unistd.h>
+#include <map>
+#include <fstream>
+#include <cstdlib>
+#include <sys/stat.h>
+
 #include "crypto_lib/aes.h"
 #include "crypto_lib/sha256.h"
 
 const unsigned char magicCode[] = "sk4920shuotingka";
 const char eol[] = "\n";
 const char slash[] = "/";
+const std::string msgArchiveNotExist = "Error: archive is not available\n";
+const std::string msgArchiveFileNameTooLong = "Error: archive file name longer than 20 characters\n";
+const std::string msgErrortxtAccessIssue = "Error.txt access error\n";
+const std::string msgArchiveCorrupt = "Archive is corrupted\n";
+
 #define ListFile "list.txt"
 #define errorList "error.txt"
 #define HMAC_SHA256_ITERS 10000

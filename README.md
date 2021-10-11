@@ -19,4 +19,5 @@ A simple file store supports encryption and decryption.
 
 
 ### Archive Encryption Format
-| HMAC(32) |[|File1 HMAC(32) | IV(16) | magicCode(16) | fileNameLength(16) | fileName(32) | filelength(16) | data ] |.....
+| HMAC(32) |[|File1 HMAC(32) | IV(16) | magicCode(16) | fileNameLength(16) | fileName(32) | filelength(16) | data ] |...\
+META block size is file HMAC(32) + other(96) = 128 bytes
