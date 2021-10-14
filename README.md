@@ -12,10 +12,15 @@ A simple file store supports encryption and decryption.
 - Extract
 - Delete
 
-### Design consideration
+### Design choice
+#### CBC vs. ECB
+I choose CBC because it prevent information leaking compared to ECB, especially matters if we encrypt image files. Through cascading the block ciphers, every block cipher's input depends on the previous output. In this architecture, flipping one bit can change whole file. On the contrary, ECB does not. 
 
-
-### Decision making
+#### List function implementation
+I store all archive and its associated files within list.txt and it is plain. We do not need to encrypt list.txt since users can easily obtain the information by 'cstore list archive'. The implementation is straightforward. I simply write each 'archive/file' as a string into list.txt, and one line one 'archive/file'. For example, supposed an archive has HW1.pdf and HW2.pdf, the content presents as 
+archive/HW1.pdf\
+archive/HW2.pdf\
+To support list function, I iterate over each line and see if any archive match and return all of its associated files.
 
 
 ### Archive Encryption Format

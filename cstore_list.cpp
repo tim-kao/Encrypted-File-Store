@@ -2,7 +2,7 @@
 #include "cstore_utils.h"
 #include "crypto_lib/sha256.h"
 
-void cstore_list(FILE *listFp, char* fileName)
+void cstore_list(FILE* listFp, char* fileName)
 {
         char * line = NULL;
         size_t len = 0;
@@ -17,7 +17,7 @@ void cstore_list(FILE *listFp, char* fileName)
 }
 
 
-bool chkList(FILE *listFp, char* archiveName, char* fileName)
+bool chkList(FILE* listFp, char* archiveName, char* fileName)
 {
         fseek(listFp, 0, SEEK_SET);
         char * line = NULL;
@@ -35,7 +35,7 @@ bool chkList(FILE *listFp, char* archiveName, char* fileName)
         return false;
 }
 
-void addList(FILE *listFp, char* archiveName, char* fileName)
+void addList(FILE* listFp, char* archiveName, char* fileName)
 {
         if (chkList(listFp, archiveName, fileName)) throw std::invalid_argument("File already exists\n");
         // write 'archive/fileName to list.txt

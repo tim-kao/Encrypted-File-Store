@@ -75,7 +75,7 @@ void aes_decryptcbc(const BYTE in[], BYTE out[], const WORD key[], int keyLength
 }
 
 
-BYTE *genHMAC(FILE* archiveFp, BYTE *key, long size)
+BYTE* genHMAC(FILE* archiveFp, BYTE* key, long size)
 {
         BYTE* readBuf = new BYTE[size];
         size_t numOfReadByte = fread(readBuf, 1, size, archiveFp);
@@ -142,9 +142,9 @@ void updateHMAC(FILE* archivePt, BYTE *key, long length)
     fseek(archivePt, SHA256_BLOCK_SIZE, SEEK_SET);
     BYTE *HMAC = genHMAC(archivePt, key, length);
     fseek(archivePt, 0, SEEK_SET);
-    size_t n = fwrite(HMAC, 1, 32, archivePt);
+    size_t n = fwrite(HMAC, 1, SHA256_BLOCK_SIZE, archivePt);
     free(HMAC);
-    if (n != 32) throw std::length_error( "HMAC update error");
+    if (n != SHA256_BLOCK_SIZE) throw std::length_error( "HMAC update error");
     verifyArchiveHMAC(archivePt, key, length);
 }
 
