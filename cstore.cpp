@@ -265,7 +265,7 @@ int main(int argc, char* argv[])
                     {
                         stat(archiveName, &archiveSt);
                         updateHMAC(archiveFp, key, archiveSt.st_size - SHA256_BLOCK_SIZE);
-                        std::cout << "Deletation complete, check error.txt for failure items\n";
+                        std::cout << "Deletation complete.\nCheck error.txt if any errors\n";
                     } 
                     break;       
                 }    
