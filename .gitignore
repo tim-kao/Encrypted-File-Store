@@ -30,8 +30,8 @@
 *.exe
 *.out
 *.app
-
-.pdf
+.DS_Store
+*.pdf
 .vscode
 *.txt
 cstore*/
