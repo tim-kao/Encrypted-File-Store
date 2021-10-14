@@ -57,6 +57,6 @@ bool cstore_delete(char* archiveName, FILE* archiveFp, BYTE hashPassWd[], char* 
         if (deleteSucc or getc(archiveFp) == EOF) break;
         fseek(archiveFp, -1, SEEK_CUR);
     }
-    std::cout << deleteSucc << "File " << deleteFileName << " is delete\n";
+    std::cout << "File " << deleteFileName << " is delete\n";
     return deleteSucc;
 }

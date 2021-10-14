@@ -7,7 +7,7 @@ debug: cstore
 
 .PHONY: clean
 clean:
-	rm *.o cstore
+	rm *.o cstore cstore_add cstore_delete cstore_extract cstore_list cstore_utils list.txt error.txt *.dSYM
 
 PREFIX = /usr/local
 export PATH := $(PREFIX)/bin:$(PATH)
