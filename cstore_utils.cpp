@@ -124,7 +124,7 @@ BYTE* getHMAC(FILE* archivePt)
 }
 
 // verify the HMAC
-void verifyArchiveHMAC(FILE *archiveFp, BYTE *key, long size)
+void verifyArchiveHMAC(FILE* archiveFp, BYTE* key, long size)
 {
         fseek(archiveFp, 0, SEEK_SET);
         BYTE *HMAC_code = getHMAC(archiveFp);
