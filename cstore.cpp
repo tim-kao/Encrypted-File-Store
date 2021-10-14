@@ -88,6 +88,7 @@ int main(int argc, char* argv[])
     {
         std::cout << e.what();
         errorfstream << e.what();
+        return 1;
     }
     
     BYTE* key = passwdTokey(ctx, passwd);
