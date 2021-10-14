@@ -234,10 +234,8 @@ int main(int argc, char* argv[])
                     }
                     if (access(archiveName, F_OK) == 0)
                     {
-                        auto res = chkList(ListFp, archiveName, fileNameFp);
-                        std::cout<<"result: "<< res << "\n";
                         // file exists in both list.txt and archive
-                        if(res && cstore_delete(archiveName, archiveFp, key, fileNameFp, archiveSt.st_size))
+                        if(chkList(ListFp, archiveName, fileNameFp) && cstore_delete(archiveName, archiveFp, key, fileNameFp, archiveSt.st_size))
                         {
                             delList(ListFp, archiveName, fileNameFp, listSt.st_size);
                         }

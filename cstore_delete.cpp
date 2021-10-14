@@ -23,7 +23,7 @@ bool cstore_delete(char* archiveName, FILE* archiveFp, BYTE hashPassWd[], char* 
         BYTE* HMAC_compute = genHMAC(archiveFp, hashPassWd, size);
         int checkIntegrity = memcmp(HMAC_compute, HMACofFile, 32);
         // release memory
-        free(fileNameLength);
+        
         
         free(fileLength);
         free(IV);
@@ -55,6 +55,7 @@ bool cstore_delete(char* archiveName, FILE* archiveFp, BYTE hashPassWd[], char* 
             deleteSucc = true;
         }
         free(fileName);
+        free(fileNameLength);
         if (deleteSucc or getc(archiveFp) == EOF) break;
         fseek(archiveFp, -1, SEEK_CUR);
     }
