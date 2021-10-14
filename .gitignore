@@ -31,7 +31,6 @@
 *.out
 *.app
 .DS_Store
-*.pdf
 .vscode
 *.txt
 cstore*/
