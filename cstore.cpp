@@ -79,7 +79,6 @@ int main(int argc, char* argv[])
     {
         archiveName = option;
         passwd = getpass("Please enter password");
-        free(passwd);
     }
     validatePasswd(passwd);
     BYTE* key = passwdTokey(ctx, passwd);
