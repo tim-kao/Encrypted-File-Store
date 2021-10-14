@@ -57,8 +57,8 @@ void delList(FILE *listFp, char* archiveName, char* fileName, long length)
         size_t targetlength = length - (strlen(archiveName) + strlen(fileName) + 2);
         if (targetlength == 0) // erase the file and return
         {
-                remove(errorList);
-                listFp = fopen(errorList , "w" );
+                remove(ListFile);
+                listFp = fopen(ListFile , "w" );
                 return;
         }
         ssize_t read;
