@@ -80,7 +80,16 @@ int main(int argc, char* argv[])
         archiveName = option;
         passwd = getpass("Please enter password");
     }
-    validatePasswd(passwd);
+    try
+    {
+        validatePasswd(passwd);
+    }
+    catch(std::exception& e)
+    {
+        std::cout << e.what();
+        errorfstream << e.what();
+    }
+    
     BYTE* key = passwdTokey(ctx, passwd);
     struct stat archiveSt;
     stat(archiveName, &archiveSt);
