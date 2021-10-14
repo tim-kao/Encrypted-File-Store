@@ -230,7 +230,7 @@ int main(int argc, char* argv[])
                         throw std::invalid_argument(archiveNotExist);
                         return 1;
                     }
-                    if (!*argv) std::cout<<"Extraction completed.\n Files that does not exist in archive are loggeed in error.txt";
+                    if (!*argv) std::cout<<"Extraction completed.\nCheck error.txt if any errors\n";
                     break;       
                 }    
                 case 4: // delete
