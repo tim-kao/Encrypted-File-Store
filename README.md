@@ -4,8 +4,6 @@ Assignment 1 - Encrypted File Store for Fall 2021 by **Shuoting Kao (UNI: sk4920
 ## Overview ##
 A simple file store supports encryption and decryption.
 
-## Demo[Watch the video](https://youtu.be/V-TPNGS4GOQ)
-
 ### Funciton
 - List
 - Add
